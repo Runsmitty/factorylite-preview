@@ -1,0 +1,175 @@
+/* 两小时检讨会（2026-11-19 v3）：看板里的完整页面，入口 = 「未达成原因」模块右上角 ⛶
+   版面：顶部横条 = 每小时产出（看板同一份分段数据，时间从左到右）；下方 = 四条线问题卡一字排开到底 + 升级问题窄栏。
+   会议大屏规则：一屏放下、不出滚动条。视觉：近黑底 + 发丝边框 + 低饱和语义色；body 已按 1920×950 等比缩放，这里一律用 px */
+#mtg {
+  --ink: #eef2f8; --ink2: #a9b4c4; --ink3: #6f7a8b; --ink4: #4a5363;
+  --bg: #05070b; --surf: #0b0f16; --hair: rgba(255,255,255,.07); --hair2: rgba(255,255,255,.12);
+  --blue: #4c8dff; --blue2: #2f6fe0; --gold2: #a8843a;
+  --red: #ff7a7a; --amber: #f2b24c; --green: #3ccf91;
+  --hatch-red: repeating-linear-gradient(-45deg, rgba(255,92,92,.55) 0 4px, rgba(255,92,92,.18) 4px 8px);
+  --hatch-amber: repeating-linear-gradient(-45deg, #f2b24c 0 5px, #9c6f22 5px 10px);
+  --num: "Bahnschrift", "DIN Alternate", "Segoe UI", "Microsoft YaHei", sans-serif;
+  position: fixed; inset: 0; z-index: 900; overflow: hidden;
+  display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; padding: 8px 14px 12px;
+  color: var(--ink); background: var(--bg);
+  background-image: radial-gradient(1200px 500px at 0% -10%, rgba(40,90,190,.16), transparent 60%), radial-gradient(900px 600px at 110% 120%, rgba(20,60,140,.12), transparent 60%);
+  font-family: "Inter", -apple-system, "Segoe UI", "Microsoft YaHei", "Leelawadee UI", Tahoma, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+#mtg[hidden] { display: none; }
+/* 开会时把底下的看板整个藏起来：进度条闪光动画会透上来，也省电视性能（看板脚本照常刷新数据） */
+body.mtg-on #scale-stage, body.mtg-on #scale-stage *, body.mtg-on #scale-stage *::before, body.mtg-on #scale-stage *::after,
+body.mtg-on #bg-aurora, body.mtg-on #bg-aurora *, body.mtg-on #restoreModsBtn { visibility: hidden !important; animation-play-state: paused !important; }
+#mtg * { scrollbar-width: none; box-sizing: border-box; }
+#mtg ::selection { background: rgba(76,141,255,.45); color: #fff; }
+#mtg button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+#mtg button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+#mtg .n { font-family: var(--num); font-variant-numeric: tabular-nums; }
+#mtg svg { flex: none; }
+.mtg-box { background: linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,.012)), var(--surf); border: 1px solid var(--hair); border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 18px 40px -24px rgba(0,0,0,.9); min-width: 0; min-height: 0; overflow: hidden; }
+
+/* 顶栏 */
+.mtg-top { display: flex; align-items: center; gap: 12px; height: 24px; }
+.mtg-back { display: inline-flex; align-items: center; gap: 2px; height: 24px; padding: 0 10px 0 5px; border-radius: 7px; font-size: 13px; font-weight: 600;
+  color: var(--ink2) !important; border: 1px solid var(--hair2) !important; transition: color .15s, border-color .15s, background .15s; }
+.mtg-back:hover { color: var(--ink) !important; border-color: rgba(255,255,255,.24) !important; background: rgba(255,255,255,.04) !important; }
+.mtg-back svg { width: 14px; height: 14px; }
+.mtg-title { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.mtg-title h1 { font-size: 18px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+.mtg-sub { font-size: 13px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mtg-sub b { color: var(--ink); font-weight: 600; }
+.mtg-sp { flex: 1; }
+.mtg-seg { display: inline-flex; padding: 2px; gap: 1px; border-radius: 8px; border: 1px solid var(--hair); background: rgba(255,255,255,.02); }
+.mtg-seg button { height: 20px; padding: 0 10px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--ink3) !important; transition: background .2s, color .2s; }
+.mtg-seg button:hover { color: var(--ink) !important; }
+.mtg-seg button.on { background: rgba(255,255,255,.1) !important; color: var(--ink) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+.mtg-fresh { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink3); white-space: nowrap; }
+.mtg-fresh i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(60,207,145,.14); }
+.mtg-fresh.bad { color: var(--red); } .mtg-fresh.bad i { background: #ff5c5c; box-shadow: 0 0 0 4px rgba(255,92,92,.16); animation: mtgBlink 1.2s infinite; }
+.mtg-clock { font-family: var(--num); font-size: 20px; font-weight: 500; letter-spacing: .02em; min-width: 88px; text-align: right; }
+@keyframes mtgBlink { 50% { opacity: .3; } }
+.mtg-banner { display: none; position: absolute; left: 50%; top: 38px; transform: translateX(-50%); z-index: 2; padding: 8px 18px; border-radius: 10px;
+  background: #2a0f12; border: 1px solid rgba(255,92,92,.4); color: var(--red); font-size: 15px; font-weight: 600; }
+.mtg-banner.show { display: block; }
+
+/* 区块标题（不加小标签，靠字号与间距） */
+.mtg-h { display: flex; align-items: center; gap: 14px; min-height: 16px; min-width: 0; }
+.mtg-h h2 { font-size: 13px; font-weight: 600; letter-spacing: .06em; color: var(--ink3); white-space: nowrap; }
+.mtg-h .sp { flex: 1; }
+.mtg-h .tot { display: inline-flex; align-items: baseline; gap: 6px; font-size: 12px; color: var(--ink3); white-space: nowrap; }
+.mtg-h .tot b { font-family: var(--num); font-size: 18px; font-weight: 600; line-height: 1; }
+.mtg-h .tot.r b { color: var(--red); } .mtg-h .tot.a b { color: var(--amber); }
+.mtg-h .cnt { font-family: var(--num); font-size: 13px; font-weight: 500; color: var(--ink3); }
+.mtg-lg { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--ink3); white-space: nowrap; overflow: hidden; }
+.mtg-lg span { display: inline-flex; align-items: center; gap: 7px; }
+.mtg-lg i { width: 12px; height: 8px; border-radius: 2px; }
+.mtg-lg b { font-family: var(--num); font-weight: 600; color: var(--ink2); }
+
+/* 顶部横条：左 = 每小时产出连续时间轴（各时段紧挨，只用发丝线分隔）；右 = LOSS 责任部门排行 */
+#mtg { --track: rgba(201,162,74,.30); --lbl: 104px; --gap: 12px; }
+/* 整页一套网格：左列 = 四张卡的总宽，右列 = 升级问题宽；上排 小时产出 | 责任部门，下排 问题卡 | 升级问题，上下分界线对齐 */
+.mtg-body { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 1.12fr); grid-template-rows: minmax(0, 36fr) minmax(0, 64fr); gap: var(--gap); min-height: 0; }
+.mtg-box > .mtg-h { flex: none; margin-bottom: 4px; }
+.mtg-strip, .mtg-dept { padding: 8px 14px 10px; display: flex; flex-direction: column; }
+.ms-wrap { flex: 1; min-height: 0; }
+.ms-grid { display: grid; gap: 4px 0; align-items: stretch; height: 100%; }
+.md-list { justify-content: space-evenly; }
+.mtg-cards { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--gap); min-height: 0; }
+.ms-th { font-family: var(--num); font-size: 14px; font-weight: 500; color: var(--ink4); text-align: center; padding-bottom: 5px; position: relative; white-space: nowrap; }
+.ms-th.win { color: var(--ink2); }
+.ms-th.win::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(76,141,255,.5); }
+.ms-th.cur { color: var(--blue); }
+.ms-th.cur::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--blue); }
+.ms-ln { display: flex; align-items: center; font-size: 20px; font-weight: 700; letter-spacing: .04em; color: var(--ink2); white-space: nowrap; }
+.ms-c { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 4px 8px; min-width: 0; border-left: 1px solid var(--hair); }
+.ms-ln + .ms-c { border-left-color: transparent; }
+.ms-c.cur { background: linear-gradient(180deg, rgba(76,141,255,.18), rgba(76,141,255,.05)); border-radius: 8px; border-left-color: transparent; }
+.ms-c.cur + .ms-c { border-left-color: transparent; }
+.ms-c.todo { opacity: .35; }
+.ms-c.out { opacity: .38; }
+.ms-c.idle { align-items: center; color: var(--ink4); font-family: var(--num); font-size: 16px; }
+.ms-d { font-family: var(--num); font-size: 24px; font-weight: 600; line-height: 1; }
+.ms-d.r { color: var(--red); } .ms-d.g { color: var(--green); } .ms-d.z { color: var(--ink4); }
+.ms-b { position: relative; height: 28px; border-radius: 6px; overflow: hidden; background: var(--track); display: flex; align-items: center; justify-content: space-between; }
+.ms-b.short { background: repeating-linear-gradient(-45deg, rgba(255,92,92,.62) 0 5px, rgba(120,30,30,.55) 5px 10px); }
+.ms-b > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px 0 0 6px; background: linear-gradient(180deg, #5c9bff, #2f6fe0); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+.ms-b .a, .ms-b .p { position: relative; z-index: 1; font-family: var(--num); font-variant-numeric: tabular-nums; white-space: nowrap; padding: 0 7px; line-height: 28px; }
+.ms-b .a { font-size: 17px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.55); }
+.ms-b .p { font-size: 13px; font-weight: 600; color: #f1d796; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.ms-b.over { box-shadow: inset -6px 0 0 var(--green); }
+.md { display: grid; grid-template-columns: minmax(64px, auto) minmax(0, 1fr) auto 44px; align-items: center; gap: 0 12px; padding: 7px 0; flex: none; }
+.md .nm { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; white-space: nowrap; }
+.md .nm i { width: 10px; height: 10px; border-radius: 3px; }
+.md .tr { height: 10px; border-radius: 5px; background: rgba(255,255,255,.05); overflow: hidden; }
+.md .tr span { display: block; height: 100%; border-radius: 5px; }
+.md b { font-family: var(--num); font-size: 22px; font-weight: 600; text-align: right; }
+.md em { font-style: normal; font-family: var(--num); font-size: 14px; color: var(--ink3); text-align: right; }
+.md.gap .nm, .md.gap b { color: var(--amber); }
+
+/* 下方：问题卡 + 升级问题 */
+.mc { display: flex; flex-direction: column; padding: 12px 16px 10px; }
+.mc-hd { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: end; flex: none; }
+.mc-nm { font-size: 26px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
+.mc-rt { grid-column: 1; font-size: 14px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-rt b { font-family: var(--num); font-weight: 600; }
+.mc-ls { grid-column: 2; grid-row: 1 / 3; text-align: right; }
+.mc-ls b { display: block; font-family: var(--num); font-size: 46px; font-weight: 600; line-height: .9; color: var(--red); letter-spacing: -.01em; }
+.mc-ls.z b { color: var(--green); }
+.mc-ls span { font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--ink4); }
+.mc-bar { display: flex; gap: 2px; height: 6px; margin: 12px 0 4px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,.05); flex: none; }
+.mc-bar > span { min-width: 3px; }
+.mc-bar > span.gap { background: var(--hatch-amber); }
+.mtg-items { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.mp { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 4px 8px; padding: 10px 0; border-top: 1px solid var(--hair); flex: none; }
+.mp .q { grid-row: 1 / 3; font-family: var(--num); font-size: 24px; font-weight: 600; line-height: 1.1; text-align: left; color: var(--red); white-space: nowrap; }
+.mp .tx { font-size: 20px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.mp .mt { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; font-size: 15px; color: var(--ink3); }
+.mp .mt i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.mp .mt .d { color: var(--ink2); font-weight: 600; }
+.mp .mt .h { font-family: var(--num); }
+.mp.gap { margin-top: auto; align-items: center; border-top: 1px solid var(--hair2); padding-bottom: 2px; }
+.mp.gap .q { grid-row: auto; color: var(--amber); padding-top: 0; }
+.mp.gap .tx { color: var(--amber); font-size: 17px; }
+.mp.gap .tx em { font-style: normal; font-family: var(--num); font-size: 14px; font-weight: 500; color: var(--ink3); margin-left: 8px; }
+.mp.gap .sw { display: inline-block; width: 16px; height: 10px; border-radius: 2px; background: var(--hatch-amber); margin-right: 8px; vertical-align: 1px; }
+.mtg-more { flex: none; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--hair); font-size: 14px; color: var(--ink3); }
+.mtg-more b { font-family: var(--num); font-weight: 600; color: var(--ink2); }
+.mtg-clear { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--green); font-size: 17px; font-weight: 600; }
+.mtg-clear svg { width: 34px; height: 34px; opacity: .85; }
+
+.mi-box { display: flex; flex-direction: column; padding: 8px 14px 10px; }
+.mi { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 11px 0; border-top: 1px solid var(--hair); flex: none; }
+.mi:first-child { border-top: 0; }
+.mi .lv { grid-row: 1 / 3; align-self: start; font-family: var(--num); font-size: 14px; font-weight: 700; text-align: center; padding: 3px 0; border-radius: 7px; color: var(--ink3); border: 1px solid var(--hair2); }
+.mi .lv.on { color: #fff; border-color: transparent; background: linear-gradient(180deg, #ff6a6a, #d63e3e); }
+.mi .tx { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mi .ag { font-family: var(--num); font-size: 15px; font-weight: 500; color: var(--ink3); white-space: nowrap; }
+.mi .ag.o { color: var(--red); }
+.mi .mt { grid-column: 2 / 4; display: flex; gap: 10px; font-size: 13px; color: var(--ink3); white-space: nowrap; overflow: hidden; }
+.mi .mt b { color: var(--ink2); font-weight: 700; }
+.mi .mt .s-open { color: var(--amber); } .mi .mt .s-doing { color: var(--blue); } .mi .mt .s-verify { color: var(--green); } .mi .mt .o { color: var(--red); }
+.mi.new { background: linear-gradient(90deg, rgba(76,141,255,.14), transparent 80%); border-radius: 10px; }
+.mtg-empty { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--ink3); font-size: 16px; }
+.mtg-empty svg { width: 26px; height: 26px; color: var(--green); }
+
+/* 入口：「未达成原因」模块右上角的放大按钮加大 */
+#mod-problems .ex-expand { width: 30px; height: 30px; top: -4px; right: 38px; border-radius: 8px; font-size: 19px; line-height: 28px;
+  opacity: 1; color: #cfe3ff; background: rgba(61,134,247,.18); box-shadow: inset 0 0 0 1px rgba(96,160,255,.4); }
+#mod-problems .ex-expand:hover { background: rgba(61,134,247,.34); color: #fff; }
+
+@media (max-width: 1500px) {
+  #mtg { padding: 10px 12px 12px; gap: 10px; }
+  .mtg-title h1 { font-size: 16px; } .mtg-sub { font-size: 12px; } .mtg-clock { font-size: 17px; min-width: 76px; }
+  .mtg-seg button { padding: 0 8px; font-size: 11px; } .mtg-lg { display: none; }
+  #mtg { --lbl: 66px; }
+  #mtg { --gap: 8px; } .mtg-strip, .mtg-dept { padding: 10px 12px; }
+  .ms-ln { font-size: 13px; } .ms-th { font-size: 12px; }
+  .ms-c { padding: 3px 4px; gap: 3px; } .ms-d { font-size: 15px; } .ms-b { height: 20px; } .ms-b .a { font-size: 12px; padding: 0 4px; line-height: 20px; } .ms-b .p { display: none; }
+  .md { grid-template-columns: minmax(40px, auto) minmax(0, 1fr) auto 30px; gap: 0 8px; padding: 4px 0; } .md .nm { font-size: 13px; } .md b { font-size: 16px; } .md em { font-size: 11px; }
+  .mc { padding: 10px 10px 8px; } .mc-nm { font-size: 18px; } .mc-ls b { font-size: 30px; } .mc-ls span { display: none; } .mc-rt { font-size: 12px; }
+  .mp { grid-template-columns: 42px minmax(0, 1fr); gap: 2px 6px; padding: 7px 0; } .mp .q { font-size: 16px; } .mp .tx { font-size: 14px; } .mp .mt { font-size: 11px; gap: 2px 8px; }
+  .mp.gap .tx { font-size: 13px; } .mp.gap .tx em { display: none; }
+  .mi-box { padding: 10px 12px 8px; } .mi { grid-template-columns: 32px minmax(0, 1fr) auto; padding: 7px 0; } .mi .tx { font-size: 13px; } .mi .mt { font-size: 11px; } .mi .ag { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .mtg-fresh.bad i { animation: none; } }

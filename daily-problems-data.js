@@ -1,0 +1,1 @@
+window.__DAILY_PROBLEMS_SEED__ = window.FactoryLite.resource("daily-problems-data") || {};

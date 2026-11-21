@@ -1,0 +1,1 @@
+FactoryLite synthetic preview. Shared UI reference cd2c51f003c699241105a142ffde780be7cd0d81. Owner-authorized source reuse; upstream has no repository LICENSE. No production source configuration or dataset is included.

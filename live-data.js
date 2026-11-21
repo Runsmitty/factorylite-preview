@@ -1,0 +1,1 @@
+window.__LIVE_DATA__ = window.FactoryLite.resource("live-data") || {};window.__HISTORY__ = window.FactoryLite.resource("history/embedded") || [];
