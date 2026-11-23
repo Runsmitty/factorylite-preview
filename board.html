@@ -6,7 +6,6 @@
 <script src="factory-config.js"></script>
 <script src="demo-clock.js"></script>
 <script src="factory-runtime.js"></script>
-<script src="board-language.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -1450,7 +1449,7 @@ const I18N = {
 };
 const LANG_KEY = "pdtiii_lang";
 let lang = "zh";
-try { lang = (window.parent !== window && window.parent.FactoryLiteHost?.getLanguage?.()) || localStorage.getItem(LANG_KEY) || "zh"; } catch (e) { lang = "zh"; }
+try { lang = localStorage.getItem(LANG_KEY) || "zh"; } catch (e) { lang = "zh"; }
 const PDTIII_BUILD = "H1500-17:20";   // ★ 内部版本标记(仅调试用, 不在界面展示)
 function t(k) { const d = I18N[lang] || I18N.zh; return d[k] !== undefined ? d[k] : (I18N.zh[k] !== undefined ? I18N.zh[k] : k); }
 function applyStaticI18n() {
@@ -1459,15 +1458,13 @@ function applyStaticI18n() {
   document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.getAttribute("data-i18n")); });
   document.querySelectorAll("[data-i18n-title]").forEach(el => { el.setAttribute("title", t(el.getAttribute("data-i18n-title"))); });
   const lb = document.getElementById("langBtn");
-  if (lb) lb.textContent = lang === "zh" ? "EN" : "ZH";
+  if (lb) lb.textContent = lang === "zh" ? "EN" : "中文";
 }
 function toggleLang() {
   lang = lang === "zh" ? "en" : "zh";
   try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
-  if (window.parent !== window) window.parent.FactoryLiteHost?.setLanguage?.(lang);
   applyStaticI18n();
   updatePeriodLabel();
-  buildWsBtns();
   // 语言切换后重渲染问题点 (泰语原文/中文翻译)
   if (typeof renderExtra === "function") { try { renderExtra(); } catch (e) {} }
   renderAll();
