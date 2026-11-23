@@ -1,11 +1,17 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://factorylite-production-default-rtdb.asia-southeast1.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>FactoryLite · Factory A Preview</title><link rel="stylesheet" href="preview.css"><script type="module" src="preview.js"></script></head>
 <body><header><div><strong>DEMO / PREVIEW</strong> <span>Factory A · Synthetic data · Read only</span><small id="stamp">Loading verified fixture…</small></div>
 <nav aria-label="Preview controls"><label>Snapshot <select id="scenario"><option value="day">Day · 16:00</option><option value="night">Night · 02:30</option><option value="boundary">Day boundary · 08:00</option></select></label>
 <label>Layout <select id="layout"><option value="device">Device width</option><option value="wide">Wide view · horizontal scroll</option></select></label>
-<button id="history">History &amp; Stops</button></nav></header>
+<button id="history">History &amp; Stops</button><button id="open-live">Firebase synthetic feed</button></nav></header>
+<dialog id="live-dialog"><form id="live-form"><h1>Factory A · Synthetic feed</h1>
+<label>Web API key <input id="firebase-key" required autocomplete="off"></label>
+<label>Viewer email <input id="viewer-email" required type="email" autocomplete="username"></label>
+<label>Viewer password <input id="viewer-password" required type="password" autocomplete="current-password"></label>
+<button type="submit">Connect</button><button type="button" id="fixture-mode">Use static fixture</button>
+</form></dialog>
 <p id="error" role="alert" hidden></p><div class="frame-shell"><iframe id="board" title="Factory A synthetic dashboard" hidden></iframe></div>
 <dialog id="history-dialog"><form method="dialog"><h1>Synthetic History &amp; Stops</h1><button aria-label="Close history">Close</button></form>
 <p>Fixtures are generated. No production resource is connected.</p><label>Date <select id="history-date"></select></label><button id="load-history">Load verified resources</button><p id="history-status" role="status"></p><pre id="history-result"></pre></dialog></body></html>
