@@ -147,7 +147,7 @@
       '    <section class="hist-card" aria-labelledby="histGapTitle"><div class="hist-card-head"><div><h3 id="histGapTitle">正常段欠产贡献</h3><p id="histGapSub">按计划减正常产出计算，不把加班产出冲抵正常段差距</p></div></div><canvas id="histGapCanvas" role="img" aria-label="正常段欠产贡献排行图"></canvas><div class="hist-empty" id="histGapEmpty"></div></section>',
       '  </div>',
       '  <section class="hist-card hist-rank" aria-labelledby="histRankTitle"><div class="hist-card-head"><div><h3 id="histRankTitle">线体经营矩阵</h3><p>按车间分类查看成品线的产出、达成、波动和连续风险</p></div><div class="hist-rank-actions"><span id="histRankCount"></span><button class="hist-rank-toggle" id="histRankToggle" type="button" aria-expanded="false" aria-controls="histRankPanel"><span id="histRankToggleText">展开矩阵</span><span class="hist-toggle-icon" aria-hidden="true">⌄</span></button></div></div><div class="hist-table-wrap" id="histRankPanel" hidden><table><thead><tr><th>线体</th><th>车间</th><th>有效日</th><th>总产出</th><th>正常段达成</th><th>加班段产出</th><th>较前日</th><th>稳定性</th><th>连续&lt;90%</th></tr></thead><tbody id="histRankBody"></tbody></table></div></section>',
-      '  <details class="hist-method"><summary>指标口径与归档质量</summary><div><b>生产日：</b><span id="histWorkday">当日白班 + 当日上午结束的前一夜班</span>。<b>总产出：</b>正常产出 + 加班产出。<b>正常段达成：</b>正常段产出 ÷ 正常段计划；加班产出不冲抵正常段欠产。<b>稳定性：</b>至少 3 个有效日的日产出变异系数。完整、可比日进入默认经营分析；部分归档仅在手工勾选后纳入。</div></details>',
+      '  <details class="hist-method"><summary>指标口径与归档质量</summary><div><b>生产日：</b>当日白班 + 当日上午结束的前一夜班。<b>总产出：</b>正常产出 + 加班产出。<b>正常段达成：</b>正常段产出 ÷ 正常段计划；加班产出不冲抵正常段欠产。<b>稳定性：</b>至少 3 个有效日的日产出变异系数。完整、可比日进入默认经营分析；部分归档仅在手工勾选后纳入。</div></details>',
       '</section>'
     ].join("");
   }
@@ -206,9 +206,7 @@
     // 今日档: 始终重新拉取实时快照(与看板同步)
     var src = host.querySelector("#histSource");
     if (src) {
-      src.innerHTML = '<i aria-hidden="true"></i>' + (data && data.sourceMode === "sql_server_express"
-        ? "SQL Server Express · Synthetic"
-        : (isTodayMode() ? "实时看板 · 随生产同步" : "静态归档 · 不增加数据库流量"));
+      src.innerHTML = '<i aria-hidden="true"></i>' + (isTodayMode() ? "实时看板 · 随生产同步" : "静态归档 · 不增加数据库流量");
     }
     if (isTodayMode()) {
       refreshToday();
@@ -357,11 +355,6 @@ var TODAY_DAY_NORMAL_END = 17 * 60 + 20;   // 白班加班起点 1040
   var _todaySeq = 0;
   function refreshToday() {
     if (!data || !host) return;
-    if (data.sourceMode === "sql_server_express") {
-      todayLive = data.days[data.days.length - 1] || null;
-      render();
-      return;
-    }
     var seq = ++_todaySeq;
     var qEl = host.querySelector("#histQuality"); if (qEl) qEl.className = "hist-quality is-loading";
     var scopes = data.finishedProductLines || data.workshops || {};
@@ -1052,9 +1045,6 @@ var TODAY_DAY_NORMAL_END = 17 * 60 + 20;   // 白班加班起点 1040
       .then(function (payload) {
         data = payload;
         buildShell();
-        if(data.sourceMode === "sql_server_express") {
-          host.querySelector("#histWorkday").textContent = "Asia/Bangkok 08:00–07:59";
-        }
         populateFilters();
         // 默认今日实时档(开页即同步看板); 进不了今日(加载失败)时落到最新归档日单日
         setPeriod("today");

@@ -1725,11 +1725,11 @@
     if (!hasD) {
       trendEmpty.style.display = "none";
       ctx.fillStyle = "#94a3b8"; ctx.textAlign = "center"; ctx.font = "12.5px 'Segoe UI',sans-serif";
-      ctx.fillText(window.FactoryLiteBoardText?.("暂无可用的完整 / 可比历史趋势") ?? "暂无可用的完整 / 可比历史趋势", W / 2, H / 2 - 18);
+      ctx.fillText("暂无可用的完整 / 可比历史趋势", W / 2, H / 2 - 18);
       ctx.font = "11px 'Segoe UI',sans-serif";
       ctx.fillStyle = "#b6c2cf";
-      ctx.fillText(window.FactoryLiteBoardText?.("部分归档已自动过滤，避免不完整数据影响判断") ?? "部分归档已自动过滤，避免不完整数据影响判断", W / 2, H / 2 + 1);
-      ctx.fillText(window.FactoryLiteBoardText?.("每日 20:40 静态归档后自动更新") ?? "每日 20:40 静态归档后自动更新", W / 2, H / 2 + 19);
+      ctx.fillText("部分归档已自动过滤，避免不完整数据影响判断", W / 2, H / 2 + 1);
+      ctx.fillText("每日 20:40 静态归档后自动更新", W / 2, H / 2 + 19);
       return;
     }
     var list = tr.filter(function (x) { return (isFullTrend || x[statusKey] !== "partial") && (x[normalKey] > 0 || x[overtimeKey] > 0); }).slice(-state.win);
