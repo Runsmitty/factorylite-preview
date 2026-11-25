@@ -1,11 +1,70 @@
-import {StaticReader} from './static-reader.js?v=c862ba7d7cf30b7e';
-import {ViewerSession} from './session.js?v=c862ba7d7cf30b7e';
-import {acceptSqlFeed, FeedAccessError, FirebasePreviewFeed, maxSyncAgeMs} from './firebase-preview-feed.js?v=c862ba7d7cf30b7e';
+import {StaticReader} from './static-reader.js?v=75ce0cb1cb9d7a36';
+import {ViewerSession} from './session.js?v=75ce0cb1cb9d7a36';
+import {acceptSqlFeed, FeedAccessError, FirebasePreviewFeed, maxSyncAgeMs} from './firebase-preview-feed.js?v=75ce0cb1cb9d7a36';
 const byId=id=>document.getElementById(id),reader=new StaticReader(new URL('./',import.meta.url));
 const assetVersion=new URL(import.meta.url).searchParams.get('v');
 let manifest,resources,scenario,epoch=0,liveFeed=null,liveReceipt=null,liveStatus=null,signInAttempt=0,polling=false;
 let language='zh';
 try {if(sessionStorage.getItem('factorylite-language')==='en')language='en';} catch{}
+const issueReports=new Map();
+let issueScope='',issueStops=[],issueRequest=0;
+const issueLabels={
+  en:['Key Issues','Close','Line','Issue','Add preview report','Synthetic preview. Reports stay in this tab and are not sent to Firebase or PDTIII.','No issues for this workday.','Synthetic stop','Preview report','Original PDTIII DM App (external)'],
+  zh:['主要问题','关闭','线体','问题','添加预览报告','此处为模拟预览。报告仅保留在本标签页，不会发送至 Firebase 或 PDTIII。','此生产日暂无问题。','模拟停机','预览报告','原版 PDTIII DM App（外部链接）'],
+};
+function renderIssues(){
+  const [title,close,line,issue,add,notice,empty,stopLabel,reportLabel,original]=issueLabels[language];
+  for(const [id,text] of Object.entries({'open-issues':title,'issues-title':title,'issues-close':close,
+    'issues-add':add,'issues-notice':notice,'issues-original':original}))byId(id).textContent=text;
+  byId('issues-line-label').firstChild.nodeValue=line+' ';
+  byId('issues-summary-label').firstChild.nodeValue=issue+' ';
+  byId('issues-date-label').firstChild.nodeValue=language==='en'?'Workday ':'生产日 ';
+  const list=byId('issues-list');
+  const reports=issueReports.get(issueScope)||[];
+  list.replaceChildren();
+  for(const [tag,item] of [...reports.map(x=>[reportLabel,x]),...issueStops.map(x=>[stopLabel,x])]){
+    const row=document.createElement('li');
+    row.textContent=tag+' · '+item.line+' — '+(item.summary||item.detail||item.code||'');
+    list.append(row);
+  }
+  byId('issues-status').textContent=list.children.length?'':empty;
+}
+async function loadIssues(workday){
+  const request=++issueRequest;
+  const currentEpoch=epoch;
+  issueScope=(liveFeed?'firebase:':'fixture:')+workday;
+  issueStops=[];
+  renderIssues();
+  const stopResource=resources?.['stops%2F'+workday];
+  if(!stopResource)return;
+  try{
+    const values=await reader.read('factory_a',stopResource);
+    if(request===issueRequest&&currentEpoch===epoch&&Array.isArray(values)){
+      issueStops=values;renderIssues();
+    }
+  }catch{/* Manual preview reports remain available. */}
+}
+byId('issues-date').onchange=()=>loadIssues(byId('issues-date').value);
+byId('open-issues').onclick=()=>{
+  const clock=Date.parse(scenario?.clock);
+  const workday=Number.isFinite(clock)?new Date(clock+(7-8)*3600000).toISOString().slice(0,10):'';
+  const dates=[...new Set([workday,...[...byId('history-date').options].map(option=>option.value)].filter(Boolean))];
+  byId('issues-date').replaceChildren(...dates.map(date=>new Option(date,date)));
+  const names=[...new Set((resources?.pdtiii?.lines||[]).map(line=>line.name).filter(Boolean))];
+  byId('issues-line').replaceChildren(...names.map(name=>new Option(name,name)));
+  byId('issues-add').disabled=!names.length;
+  byId('issues-summary').value='';
+  byId('issues-dialog').showModal();
+  return loadIssues(byId('issues-date').value);
+};
+byId('issues-form').onsubmit=event=>{
+  event.preventDefault();
+  const line=byId('issues-line').value,summary=byId('issues-summary').value.trim();
+  if(!line||!summary||!issueScope)return;
+  issueReports.set(issueScope,[{line,summary},...(issueReports.get(issueScope)||[])]);
+  byId('issues-summary').value='';
+  renderIssues();
+};
 const fail=error=>{byId('error').hidden=false;byId('error').textContent='Preview unavailable: '+error.message;};
 function check(id){if(id!=='factory_a'||!resources)throw new Error('Factory access denied');}
 function boardUrl(scenarioId){
@@ -16,6 +75,9 @@ function boardUrl(scenarioId){
   return url;
 }
 function hideBoard(){
+  ++issueRequest;issueStops=[];issueScope='';
+  if(byId('issues-dialog').open)byId('issues-dialog').close();
+  renderIssues();
   ++epoch;reader.clear();resources=null;byId('board').hidden=true;byId('board').src='about:blank';
 }
 function renderLiveStatus(){
@@ -29,12 +91,14 @@ window.FactoryLiteHost=Object.freeze({
   setLanguage(value){
     if(value!=='en'&&value!=='zh')return;
     language=value;
+    renderIssues();
     try{sessionStorage.setItem('factorylite-language',value);}catch{}
   },
   boot(id){check(id);return structuredClone(resources);},
   async read(id){check(id);return structuredClone(resources);},
   async resource(id,key){check(id);const selected=epoch;if(!Object.hasOwn(resources,key))throw new Error('Demo resource unavailable');const result=await reader.read(id,resources[key]);if(selected!==epoch)throw new Error('Preview changed');return result;},
 });
+renderIssues();
 async function select(){
   const selected=++epoch;reader.clear();byId('error').hidden=true;resources=null;byId('board').hidden=true;byId('board').src='about:blank';
   scenario=manifest.scenarios[byId('scenario').value];if(!scenario)throw new Error('Unknown demo scenario');

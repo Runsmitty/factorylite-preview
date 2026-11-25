@@ -1,4 +1,4 @@
-import {validateArchiveManifest,verifyArchiveChunk,verifyArchiveResource} from './archive.js?v=c862ba7d7cf30b7e';
+import {validateArchiveManifest,verifyArchiveChunk,verifyArchiveResource} from './archive.js?v=75ce0cb1cb9d7a36';
 export class StaticReader {
   constructor(base){this.base=new URL(base);if(this.base.origin!==location.origin)throw new Error('Same-origin demo required');this.clear();}
   clear(){this.generation=(this.generation||0)+1;this.cache=new Map();}
